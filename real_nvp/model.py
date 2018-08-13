@@ -62,7 +62,7 @@ def model_spec(x):
   for layer in layers:
     y,jac,z = layer.forward_and_jacobian(y, jac, z)
 
-  z = tf.concat(3, [z,y])
+  z = tf.concat([z,y], 3)
 
   # record dimension of the final variable
   global final_latent_dimension
@@ -79,7 +79,7 @@ def inv_model_spec(y):
     y,z = layer.backward(y,z)
     
   # inverse logit
-  x = tf.inv(1 + tf.exp(-y))
+  x = tf.reciprocal(1 + tf.exp(-y))
 
   return x
     

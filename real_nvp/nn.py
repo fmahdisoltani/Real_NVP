@@ -113,9 +113,9 @@ class CouplingLayer(Layer):
       white = tf.ones([xs[0], xs[1], xs[2], xs[3]//2])
       black = tf.zeros([xs[0], xs[1], xs[2], xs[3]//2])
       if mask_type == 'channel0':
-        b = tf.concat(3, [white, black])
+        b = tf.concat([white, black], 3)
       else:
-        b = tf.concat(3, [black, white])
+        b = tf.concat([black, white], 3)
 
     bs = int_shape(b)
     assert bs == xs
@@ -133,7 +133,7 @@ class CouplingLayer(Layer):
       # masked half of x
       x1 = x * b
       l,m = self.function_l_m(x1, b)
-      y = x1 + tf.mul(-b+1.0, x*tf.check_numerics(tf.exp(l), "exp has NaN") + m)
+      y = x1 + tf.multiply(-b+1.0, x*tf.check_numerics(tf.exp(l), "exp has NaN") + m)
       log_det_jacobian = tf.reduce_sum(l, [1,2,3])
       sum_log_det_jacobians += log_det_jacobian
 
@@ -146,7 +146,7 @@ class CouplingLayer(Layer):
 
       y1 = y * b
       l,m = self.function_l_m(y1, b)
-      x = y1 + tf.mul( y*(-b+1.0) - m, tf.exp(-l))
+      x = y1 + tf.multiply( y*(-b+1.0) - m, tf.exp(-l))
       return x, z
 
 # The layer that performs squeezing.
@@ -193,7 +193,7 @@ class FactorOutLayer(Layer):
     x = x[:,:,:,split:]
 
     if z is not None:
-      z = tf.concat(3, [z, new_z])
+      z = tf.concat([z, new_z], 3)
     else:
       z = new_z
     
@@ -218,7 +218,7 @@ class FactorOutLayer(Layer):
     assert (int_shape(new_y)[3] == split)
 
     if y is not None:
-      x = tf.concat(3, [new_y, y])
+      x = tf.concat([new_y, y], 3)
     else:
       x = new_y
 
