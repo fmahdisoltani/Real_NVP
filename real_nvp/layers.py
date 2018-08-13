@@ -1,7 +1,8 @@
 import numpy as np
 import tensorflow as tf
 
-from real_nvp.utils import int_shape
+from real_nvp.utils import int_shape, batch_norm
+
 
 class Layer():
     def forward_and_jacobian(self, x, sum_log_det_jacobians, z):
@@ -19,14 +20,6 @@ class CouplingLayer(Layer):
     def __init__(self, mask_type, name='Coupling'):
         self.mask_type = mask_type
         self.name = name
-
-    # Batch normalization.
-    # TODO: Moving average batch normaliation
-    def batch_norm(self, x):
-        mu = tf.reduce_mean(x)
-        sig2 = tf.reduce_mean(tf.square(x - mu))
-        x = (x - mu) / tf.sqrt(sig2 + 1.0e-6)
-        return x, sig2
 
     # Weight normalization technique
     def get_normalized_weights(self, name, weights_shape):

@@ -60,3 +60,10 @@ def adam_updates(params, cost_or_grads, lr=0.001, mom1=0.9, mom2=0.999):
     return tf.group(*updates)
 
 
+# Batch normalization.
+# TODO: Moving average batch normalization
+def batch_norm(self, x):
+    mu = tf.reduce_mean(x)
+    sig2 = tf.reduce_mean(tf.square(x - mu))
+    x = (x - mu) / tf.sqrt(sig2 + 1.0e-6)
+    return x, sig2
