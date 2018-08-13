@@ -3,7 +3,9 @@ The core Real-NVP model
 """
 
 import tensorflow as tf
-import real_nvp.nn as nn
+import real_nvp.layers as real_nvp_layers
+
+from real_nvp.utils import int_shape
 
 layers = []
 
@@ -13,22 +15,22 @@ def construct_model_spec():
   global layers
   num_scales = 2
   for scale in range(num_scales-1):    
-    layers.append(nn.CouplingLayer('checkerboard0', name='Checkerboard%d_1' % scale))
-    layers.append(nn.CouplingLayer('checkerboard1', name='Checkerboard%d_2' % scale))
-    layers.append(nn.CouplingLayer('checkerboard0', name='Checkerboard%d_3' % scale))
-    layers.append(nn.SqueezingLayer(name='Squeeze%d' % scale))
-    layers.append(nn.CouplingLayer('channel0', name='Channel%d_1' % scale))
-    layers.append(nn.CouplingLayer('channel1', name='Channel%d_2' % scale))
-    layers.append(nn.CouplingLayer('channel0', name='Channel%d_3' % scale))
-    layers.append(nn.FactorOutLayer(scale, name='FactorOut%d' % scale))
+    layers.append(real_nvp_layers.CouplingLayer('checkerboard0', name='Checkerboard%d_1' % scale))
+    layers.append(real_nvp_layers.CouplingLayer('checkerboard1', name='Checkerboard%d_2' % scale))
+    layers.append(real_nvp_layers.CouplingLayer('checkerboard0', name='Checkerboard%d_3' % scale))
+    layers.append(real_nvp_layers.SqueezingLayer(name='Squeeze%d' % scale))
+    layers.append(real_nvp_layers.CouplingLayer('channel0', name='Channel%d_1' % scale))
+    layers.append(real_nvp_layers.CouplingLayer('channel1', name='Channel%d_2' % scale))
+    layers.append(real_nvp_layers.CouplingLayer('channel0', name='Channel%d_3' % scale))
+    layers.append(real_nvp_layers.FactorOutLayer(scale, name='FactorOut%d' % scale))
 
   # final layer
   scale = num_scales-1
-  layers.append(nn.CouplingLayer('checkerboard0', name='Checkerboard%d_1' % scale))
-  layers.append(nn.CouplingLayer('checkerboard1', name='Checkerboard%d_2' % scale))
-  layers.append(nn.CouplingLayer('checkerboard0', name='Checkerboard%d_3' % scale))
-  layers.append(nn.CouplingLayer('checkerboard1', name='Checkerboard%d_4' % scale))
-  layers.append(nn.FactorOutLayer(scale, name='FactorOut%d' % scale))
+  layers.append(real_nvp_layers.CouplingLayer('checkerboard0', name='Checkerboard%d_1' % scale))
+  layers.append(real_nvp_layers.CouplingLayer('checkerboard1', name='Checkerboard%d_2' % scale))
+  layers.append(real_nvp_layers.CouplingLayer('checkerboard0', name='Checkerboard%d_3' % scale))
+  layers.append(real_nvp_layers.CouplingLayer('checkerboard1', name='Checkerboard%d_4' % scale))
+  layers.append(real_nvp_layers.FactorOutLayer(scale, name='FactorOut%d' % scale))
 
 
 # the final dimension of the latent space is recorded here
@@ -36,7 +38,7 @@ def construct_model_spec():
 final_latent_dimension = []
 def model_spec(x):
   counters = {}
-  xs = nn.int_shape(x)
+  xs = int_shape(x)
   sum_log_det_jacobians = tf.zeros(xs[0])    
 
   # corrupt data (Tapani Raiko's dequantization)
@@ -66,7 +68,7 @@ def model_spec(x):
 
   # record dimension of the final variable
   global final_latent_dimension
-  final_latent_dimension = nn.int_shape(z)
+  final_latent_dimension = real_nvp_layers.int_shape(z)
 
   return z,jac
 
