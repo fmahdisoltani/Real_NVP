@@ -12,9 +12,11 @@ import argparse
 import numpy as np
 import tensorflow as tf
 
-import real_nvp.nn as real_nvp_nn
+import real_nvp.layers as real_nvp_layers
 from real_nvp.model import model_spec as real_nvp_model_spec
 from real_nvp.model import inv_model_spec as real_nvp_inv_model_spec
+from real_nvp.loss import loss
+from real_nvp.utils import adam_updates
 import data.cifar10_data as cifar10_data
 import data.imagenet_data as imagenet_data
 import util
@@ -58,7 +60,7 @@ test_data = DataLoader(args.data_dir, 'test', args.batch_size * args.nr_gpu, shu
 obs_shape = train_data.get_observation_size() # e.g. a tuple (32,32,3)
 model_spec = real_nvp_model_spec
 inv_model_spec = real_nvp_inv_model_spec
-nn = real_nvp_nn
+real_nvp_layers
 
 # create the model
 model = tf.make_template('model', model_spec)
@@ -87,12 +89,12 @@ for i in range(args.nr_gpu):
     with tf.device('/gpu:%d' % i):
         # train
         gen_par,jacs = model(xs[i])
-        loss_gen.append(nn.loss(gen_par, jacs))
+        loss_gen.append(loss(gen_par, jacs))
         # gradients
         grads.append(tf.gradients(loss_gen[i], all_params))
         # test
         gen_par,jacs = model(xs[i])
-        loss_gen_test.append(nn.loss(gen_par, jacs))
+        loss_gen_test.append(loss(gen_par, jacs))
 
 # add gradients together and get training updates
 tf_lr = tf.placeholder(tf.float32, shape=[])
@@ -103,7 +105,7 @@ with tf.device('/gpu:0'):
         for j in range(len(grads[0])):
             grads[0][j] += grads[i][j]
     # training op
-    optimizer = nn.adam_updates(all_params, grads[0], lr=tf_lr, mom1=0.95, mom2=0.9995)
+    optimizer = adam_updates(all_params, grads[0], lr=tf_lr, mom1=0.95, mom2=0.9995)
 
 # convert loss to bits/dim
 bits_per_dim = loss_gen[0]/(args.nr_gpu*np.log(2.)*np.prod(obs_shape)*args.batch_size)
