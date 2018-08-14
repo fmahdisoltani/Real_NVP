@@ -1,8 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from real_nvp.utils import int_shape, batch_norm
-
+import real_nvp.utils as utils
 
 class Layer():
     def forward_and_jacobian(self, x, sum_log_det_jacobians, z):
@@ -21,34 +20,23 @@ class CouplingLayer(Layer):
         self.mask_type = mask_type
         self.name = name
 
-    # Weight normalization technique
-    def get_normalized_weights(self, name, weights_shape):
-        weights = tf.get_variable(name, weights_shape, tf.float32,
-                                  tf.contrib.layers.xavier_initializer())
-        scale = tf.get_variable(name + "_scale", [1], tf.float32,
-                                tf.contrib.layers.xavier_initializer(),
-                                regularizer=tf.contrib.layers.l2_regularizer(5e-5))
-        norm = tf.sqrt(tf.reduce_sum(tf.square(weights)))
-        return weights / norm * scale
-
-    # corresponds to the function m and l in the RealNVP paper
-    # (Function m and l became s and t in the new version of the paper)
+    # corresponds to the function s and t in the RealNVP paper
     def function_l_m(self, x, mask, name='function_l_m'):
         with tf.variable_scope(name):
             channel = 64
-            padding = 'SAME'
-            xs = int_shape(x)
+            padding = 'SAME+'
+            xs = utils.int_shape(x)
             kernel_h = 3
             kernel_w = 3
             input_channel = xs[3]
             y = x
 
-            y, _ = self.batch_norm(y)
+            y, _ = utils.batch_norm(y)
             weights_shape = [1, 1, input_channel, channel]
             weights = self.get_normalized_weights("weights_input", weights_shape)
 
             y = tf.nn.conv2d(y, weights, [1, 1, 1, 1], padding=padding)
-            y, _ = self.batch_norm(y)
+            y, _ = utils.batch_norm(y)
             y = tf.nn.relu(y)
 
             skip = y
@@ -58,12 +46,12 @@ class CouplingLayer(Layer):
                 weights_shape = [kernel_h, kernel_w, channel, channel]
                 weights = self.get_normalized_weights("weights%d_1" % r, weights_shape)
                 y = tf.nn.conv2d(y, weights, [1, 1, 1, 1], padding=padding)
-                y, _ = self.batch_norm(y)
+                y, _ = utils.batch_norm(y)
                 y = tf.nn.relu(y)
                 weights_shape = [kernel_h, kernel_w, channel, channel]
                 weights = self.get_normalized_weights("weights%d_2" % r, weights_shape)
                 y = tf.nn.conv2d(y, weights, [1, 1, 1, 1], padding=padding)
-                y, _ = self.batch_norm(y)
+                y, _ = utils.batch_norm(y)
                 y += skip
                 y = tf.nn.relu(y)
                 skip = y
@@ -105,7 +93,7 @@ class CouplingLayer(Layer):
             else:
                 b = tf.concat([black, white], 3)
 
-        bs = int_shape(b)
+        bs = utils.int_shape(b)
         assert bs == xs
 
         return b
@@ -115,7 +103,7 @@ class CouplingLayer(Layer):
     # log_det_jacobian is a 1D tensor of size (batch_size)
     def forward_and_jacobian(self, x, sum_log_det_jacobians, z):
         with tf.variable_scope(self.name):
-            xs = int_shape(x)
+            xs = utils.int_shape(x)
             b = self.get_mask(xs, self.mask_type)
 
             # masked half of x
@@ -129,7 +117,7 @@ class CouplingLayer(Layer):
 
     def backward(self, y, z):
         with tf.variable_scope(self.name, reuse=True):
-            ys = int_shape(y)
+            ys = utils.int_shape(y)
             b = self.get_mask(ys, self.mask_type)
 
             y1 = y * b
@@ -146,7 +134,7 @@ class SqueezingLayer(Layer):
         self.name = name
 
     def forward_and_jacobian(self, x, sum_log_det_jacobians, z):
-        xs = int_shape(x)
+        xs = utils.int_shape(x)
         assert xs[1] % 2 == 0 and xs[2] % 2 == 0
         y = tf.space_to_depth(x, 2)
         if z is not None:
@@ -155,7 +143,7 @@ class SqueezingLayer(Layer):
         return y, sum_log_det_jacobians, z
 
     def backward(self, y, z):
-        ys = int_shape(y)
+        ys = utils.int_shape(y)
         assert ys[3] % 4 == 0
         x = tf.depth_to_space(y, 2)
 
@@ -174,7 +162,7 @@ class FactorOutLayer(Layer):
 
     def forward_and_jacobian(self, x, sum_log_det_jacobians, z):
 
-        xs = int_shape(x)
+        xs = utils.int_shape(x)
         split = xs[3] // 2
 
         # The factoring out is done on the channel direction.
@@ -197,15 +185,15 @@ class FactorOutLayer(Layer):
         # At scale s, (1/2)^(s+1) are factored out
         # Hence, at backward pass of scale s, (1/2)^(s) of z should be factored in
 
-        zs = int_shape(z)
+        zs = utils.int_shape(z)
         if y is None:
             split = zs[3] // (2 ** self.scale)
         else:
-            split = int_shape(y)[3]
+            split = utils.int_shape(y)[3]
         new_y = z[:, :, :, -split:]
         z = z[:, :, :, :-split]
 
-        assert (int_shape(new_y)[3] == split)
+        assert (utils.int_shape(new_y)[3] == split)
 
         if y is not None:
             x = tf.concat([new_y, y], 3)
