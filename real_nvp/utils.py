@@ -62,8 +62,20 @@ def adam_updates(params, cost_or_grads, lr=0.001, mom1=0.9, mom2=0.999):
 
 # Batch normalization.
 # TODO: Moving average batch normalization
-def batch_norm(self, x):
+def batch_norm(x):
     mu = tf.reduce_mean(x)
     sig2 = tf.reduce_mean(tf.square(x - mu))
     x = (x - mu) / tf.sqrt(sig2 + 1.0e-6)
     return x, sig2
+
+
+# Weight normalization technique
+# TODO: move to utils
+def get_normalized_weights(name, weights_shape):
+    weights = tf.get_variable(name, weights_shape, tf.float32,
+                              tf.contrib.layers.xavier_initializer())
+    scale = tf.get_variable(name + "_scale", [1], tf.float32,
+                            tf.contrib.layers.xavier_initializer(),
+                            regularizer=tf.contrib.layers.l2_regularizer(5e-5))
+    norm = tf.sqrt(tf.reduce_sum(tf.square(weights)))
+    return weights / norm * scale
