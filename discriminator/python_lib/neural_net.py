@@ -491,7 +491,7 @@ class NeuralNet(object):
     if want_visualize:
       self.make_figure()
 
-    for epoch in xrange(num_epochs):
+    for epoch in range(num_epochs):
       
       if learn_params["epoch_1"]:
         if epoch >= learn_params["epoch_1"][0]:
