@@ -1,7 +1,7 @@
 import numpy as np
-import python_lib.nn_utils as nn
-from python_lib.dataset import MNIST
-from python_lib.neural_net import NeuralNet
+import discriminator.python_lib.nn_utils as nn
+from python_lib.dataset.mnist import MNIST
+from discriminator.python_lib.neural_net import NeuralNet
 import tensorflow as tf
 import time
 
@@ -73,7 +73,7 @@ class AE(NeuralNet):
   def epoch_10(self):
     if self.want_save:
       self.saver.save(self.sess, self.directory + "/" + self.name + "_weights")
-      print "----Saved Weights."
+      print("----Saved Weights.")
     if self.want_visualize:
       self.visualize()
       self.log("----Visualized.")
