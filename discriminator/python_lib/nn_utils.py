@@ -300,8 +300,8 @@ class DatasetProvider(object):
 
   def train(self):
     data = Data()
-    num_batch = self.train_size / self.data_batch
-    for i in xrange(num_batch):
+    num_batch = int(self.train_size / self.data_batch)
+    for i in range(num_batch):
       data.num_batch = num_batch
       data.fraction = 1.0 * i / num_batch      
       data.index = i
@@ -313,8 +313,8 @@ class DatasetProvider(object):
 
   def eval(self):
     data = Data()
-    num_batch = self.eval_size / self.data_batch
-    for i in xrange(num_batch):
+    num_batch = int(self.eval_size / self.data_batch)
+    for i in range(num_batch):
       data.num_batch = num_batch      
       data.fraction = 1.0 * i / num_batch
       data.index = i
@@ -325,8 +325,8 @@ class DatasetProvider(object):
 
   def test(self):
     data = Data()
-    num_batch = self.test_size / self.data_batch
-    for i in xrange(num_batch):
+    num_batch = int(self.test_size / self.data_batch)
+    for i in range(num_batch):
       data.num_batch = num_batch      
       data.fraction = 1.0 * i / num_batch            
       data.index = i
@@ -350,7 +350,7 @@ def data_provider_seq(x, t=None, x_test=None, t_test=None, t_train_labels=None,
                       data_batch=10000):
   size = len(x)
   lst = []
-  for i in xrange(size):
+  for i in range(size):
     lst.append(DataProvider(x=x[i], t=t[i], x_test=x_test, t_test=t_test,
                             t_train_labels=t_train_labels, t_labels=t_labels,
                             train_range=train_range, test_range=test_range,
