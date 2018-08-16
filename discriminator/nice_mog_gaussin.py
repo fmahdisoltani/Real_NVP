@@ -2,8 +2,8 @@ import os
 
 import numpy as np
 import python_lib.nn_utils as nn
-from python_lib.dataset import MNIST
-from python_lib.neural_net import *
+from discriminator.python_lib.dataset.mnist import MNIST
+from discriminator.python_lib.neural_net import *
 import tensorflow as tf
 
 def get_mask(shape):
@@ -16,7 +16,7 @@ HIDDEN_SIZE = 1000
 
 class AE(NeuralNet):
 
-  def finalize(self):
+  def init_optimizer(self):
     self.learning_rate = tf.placeholder("float")
     assert self.cost is not None
 
@@ -32,7 +32,7 @@ class AE(NeuralNet):
 
   def log_likelihood(self, h, jacs):
     out = -0.5*(h**2 + np.log(2*np.pi))
-    print self.int_shape(out), "--------------------------"
+    print (self.int_shape(out), "--------------------------")
     return -tf.reduce_sum(out) - tf.reduce_sum(jacs)
 
   def forward_pass(self, x):
@@ -69,7 +69,7 @@ class AE(NeuralNet):
 
     self.y, jacs = self.forward_pass(self.x)
     self.cost = self.log_likelihood(self.y, jacs)
-    self.finalize()
+    self.init_optimizer()
     self.y_sample = self.sample_g(100)
     self.reuse = True
     self.x_sample = self.backward_pass(self.y_sample)
@@ -80,17 +80,17 @@ class AE(NeuralNet):
     feed_dict = {self.x: x_noise}
     [y] = self.sess.run([self.y], feed_dict=feed_dict)
 
-    print y.shape
+    print (y.shape)
 
     feed_dict = {self.y_sample: y}
     [x_sample] = self.sess.run([self.x_sample], feed_dict=feed_dict)      
-    print x_sample.shape
-    print "Errrrrrrooooooooooorrrrrrrrr:", np.sum(np.abs((x_sample - x_noise)))
+    print (x_sample.shape)
+    print ("Errrrrrrooooooooooorrrrrrrrr:", np.sum(np.abs((x_sample - x_noise))))
 
   def epoch_10(self):
     if self.want_save:
       self.saver.save(self.sess, self.directory + "/" + self.name + "_weights")
-      print "----Saved Weights."
+      print ("----Saved Weights.")
     if self.want_visualize:
       self.visualize()
       self.log("----Visualized.")
@@ -213,11 +213,14 @@ class AE(NeuralNet):
 
 def run(sess):
 
-  x, t, x_test, t_test, t_train_labels, t_labels = MNIST.load()
+  #
+  mnist_dataset = MNIST.load_as_dataset()
+  x, t, t_train_labels, _, _, _, x_test, t_test, t_labels = MNIST.unpack_dataset(mnist_dataset)
+
 
   dp = nn.DataProvider(x=x, t=x, x_test=x_test, t_test=t_test,
                        t_train_labels=t_train_labels, t_labels=t_labels,
-                       train_range=[0, 600],
+                       train_range=[0, 550],
                        test_range=[0, 100],
                        data_batch=100)
 
