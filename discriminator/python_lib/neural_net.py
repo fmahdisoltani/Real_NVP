@@ -424,7 +424,7 @@ class NeuralNet(object):
         shape = self.int_shape(logits)
         return .5 * tf.reduce_sum(tf.abs(x - t)) / shape[0]
 
-    def finalize(self):
+    def init_optimizer(self):
         self.learning_rate = tf.placeholder("float")
         assert self.cost is not None
         # self.optimizer = tf.train.MomentumOptimizer(self.learning_rate,
