@@ -1028,7 +1028,7 @@ class CouplingSplit(object):
     def f_scale(self, x):
         n_filter = self.parent.int_shape(x)[1]
         out = x
-        for i in xrange(self.sub_layers - 1):
+        for i in range(self.sub_layers - 1):
             out = self.parent.dense(out, num_filters=self.num_hidden, activation="relu",
                                     name=self.name + "_sub_s_" + str(i))
         out = self.parent.dense(out, num_filters=n_filter, activation="tanh",
@@ -1038,7 +1038,7 @@ class CouplingSplit(object):
     def f_translation(self, x):
         n_filter = self.parent.int_shape(x)[1]
         out = x
-        for i in xrange(self.sub_layers - 1):
+        for i in range(self.sub_layers - 1):
             out = self.parent.dense(x, num_filters=self.num_hidden, activation="relu",
                                     name=self.name + "_sub_t_" + str(i))
         out = self.parent.dense(out, num_filters=n_filter, activation="linear",
