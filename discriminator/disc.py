@@ -11,7 +11,7 @@ class AE(NeuralNet):
         super().__init__()
 
 
-    def finalize(self):
+    def init_optimizer(self):
         self.learning_rate = tf.placeholder("float")
         assert self.cost is not None
         # opt = tf.train.MomentumOptimizer(self.learning_rate, 0.9)
@@ -43,7 +43,7 @@ class AE(NeuralNet):
 
         self.cost = self.sce(y_logits, self.t)
 
-        self.finalize()
+        self.init_optimizer()
 
     def eval(self):
         num_errors = 0
